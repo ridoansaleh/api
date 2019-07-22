@@ -1,0 +1,14 @@
+{
+    "todos": [
+        {
+            "id": 1,
+            "task": "Buy Ice Cream for my little brother",
+            "status": "completed"
+        },
+        {
+            "id": 2,
+            "task": "Finish Math homework",
+            "status": "waiting"
+        }
+    ]
+}
