@@ -15,6 +15,7 @@ app.use((req, res, next) => {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// GET ALL TODOS
 app.get('/api/todos', (req, res) => {
   let data = '';
   fs.readFile(path.resolve(__dirname, 'data.json'), (err, resp) => {
@@ -24,35 +25,48 @@ app.get('/api/todos', (req, res) => {
   });
 });
 
+// GET A TODO
 app.get('/api/todos/:id', (req, res) => {
-    let data = '';
     fs.readFile(path.resolve(__dirname, 'data.json'), (err, resp) => {
       if (err) return console.log('Error::reading tasks from data.json file ', err);
-      data = JSON.parse(resp);
-      res.send(data.todos);
+      let data = JSON.parse(resp);
+      let todoData = data.todos.filter(todo => todo.id === parseInt(req.params.id))
+      if (todoData.length > 0) {
+        res.status(200).send(todoData[0]);
+      } else {
+        res.status(500).send({ message: 'Error: not found any task with that id' });
+      }
     });
-  });
+});
 
+// POST A TODO
 app.post('/api/todo', (req, res) => {
   fs.readFile(path.resolve(__dirname, 'data.json'), (err, resp) => {
     if (err) return console.log('Error::reading tasks from data.json file ', err);
-    let json = JSON.parse(resp);
-    json.todos.push(req.body);
-    fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(json), err => {
-      if (err) return console.log('Error::writing task to the data.json file ', err);
-    });
+    const { id, task, status } = req.body
+    if (id && task && status) {
+      let json = JSON.parse(resp);
+      json.todos.push(req.body);
+      fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(json), err => {
+        if (err) return console.log('Error::writing task to the data.json file ', err);
+      });
+      res.status(200).send({ message: 'Success: data have been added' });
+    } else {
+      res.status(500).send({ message: 'Error: all fields must be filled with data' })
+    }
   });
-  res.send({ message: 'Success' });
 });
 
+// EDIT A TODO
 app.put('/api/todo/:id', (req, res) => {
     fs.readFile(path.resolve(__dirname, 'data.json'), (err, resp) => {
       if (err) return console.log('Error::reading tasks from data.json file ', err);
-      let json = JSON.parse(resp);
       const id = parseInt(req.params.id)
       const { task, status } = req.body
-      let newTodo = json.todos.map(todo => {
-          if(todo.id !== id) {
+      if (task && status) {
+        let json = JSON.parse(resp);
+        let newTodo = json.todos.map(todo => {
+          if(todo.id === id) {
             return {
                 id,
                 task,
@@ -61,30 +75,41 @@ app.put('/api/todo/:id', (req, res) => {
           } else {
               return todo
           }
-      })
-      let result = {
-          todos: newTodo
+        })
+        let result = {
+            todos: newTodo
+        }
+        fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(result), err => {
+          if (err) return console.log('Error::editing task to the data.json file ', err);
+          res.status(200).send({ message: 'Success: task have been edited' });
+        });
+      } else {
+        res.status(500).send({
+          message: 'Error: all fields must be filled with data'
+        })
       }
-      fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(result), err => {
-        if (err) return console.log('Error::editing task to the data.json file ', err);
-      });
     });
-    res.send({ message: 'Success' });
 });
 
+// DELETE A TODO
 app.delete('/api/todo/:id', (req, res) => {
     fs.readFile(path.resolve(__dirname, 'data.json'), (err, resp) => {
       if (err) return console.log('Error::reading tasks from data.json file ', err);
       let json = JSON.parse(resp);
-      let leftTodo = json.todos.filter(todo => todo.id !== parseInt(req.params.id))
-      let result = {
-          todos: leftTodo
+      let isDataExist = json.todos.some(todo => todo.id === parseInt(req.params.id))
+      if (isDataExist) {
+        let leftTodo = json.todos.filter(todo => todo.id !== parseInt(req.params.id))
+        let result = {
+            todos: leftTodo
+        }
+        fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(result), err => {
+          if (err) return console.log('Error::deleting task to the data.json file ', err);
+          res.status(200).send({ message: 'Success: a task has been deleted' });
+        });
+      } else {
+        res.status(500).send({ message: 'Error: a task you want to delete is not exist' })
       }
-      fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(result), err => {
-        if (err) return console.log('Error::deleting task to the data.json file ', err);
-      });
     });
-    res.send({ message: 'Success' });
 });
 
 app
