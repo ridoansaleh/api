@@ -22,11 +22,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // GET ALL TODOS
 app.get('/api/todos', (req, res) => {
-  let data = '';
   fs.readFile(path.resolve(__dirname, 'data.json'), (err, resp) => {
     if (err) return console.log('Error::reading tasks from data.json file ', err);
-    data = JSON.parse(resp);
-    res.send(data.todos);
+    let data = JSON.parse(resp);
+    res.status(200).send(data.todos);
   });
 });
 
@@ -54,8 +53,8 @@ app.post('/api/todo', (req, res) => {
       json.todos.push(req.body);
       fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(json), err => {
         if (err) return console.log('Error::writing task to the data.json file ', err);
+        res.status(200).send({ message: 'Success: data have been added' });
       });
-      res.status(200).send({ message: 'Success: data have been added' });
     } else {
       res.status(500).send({ message: 'Error: all fields must be filled with data' })
     }
@@ -85,7 +84,7 @@ app.put('/api/todo/:id', (req, res) => {
             todos: newTodo
         }
         fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(result), err => {
-          if (err) return console.log('Error::editing task to the data.json file ', err);
+          if (err) return console.log('Error::editing task in the data.json file ', err);
           res.status(200).send({ message: 'Success: task have been edited' });
         });
       } else {
@@ -108,7 +107,7 @@ app.delete('/api/todo/:id', (req, res) => {
             todos: leftTodo
         }
         fs.writeFile(path.resolve(__dirname, 'data.json'), JSON.stringify(result), err => {
-          if (err) return console.log('Error::deleting task to the data.json file ', err);
+          if (err) return console.log('Error::deleting task in the data.json file ', err);
           res.status(200).send({ message: 'Success: a task has been deleted' });
         });
       } else {
